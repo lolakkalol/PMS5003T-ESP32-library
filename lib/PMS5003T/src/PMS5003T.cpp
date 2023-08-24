@@ -1,3 +1,15 @@
+/**
+ * @file PMS5003T.cpp
+ * @author Alexander Stenlund (alexander.stenlund@telia.com)
+ * @brief All implementations of methods for the class PMS5003T 
+ * is located here. These methods are used to communicate with 
+ * a PMS5003T sensor using software serial.
+ * @version 0.1
+ * @date 2023-08-24
+ * 
+ * @copyright Copyright (c) 2023
+ * 
+ */
 #include <Arduino.h>
 #include "PMS5003T.h"
 
