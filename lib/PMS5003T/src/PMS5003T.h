@@ -18,13 +18,6 @@ enum class PMS5003T_CMD {
     SLEEP_SET            = 0xe4,
 };
 
-enum class CMD_ARG {
-    SLEEP   = 0x00,
-    WAKEUP  = 0x01,
-    PASSIVE = 0x00,
-    ACTIVE  = 0x01,
-};
-
 class PMS5003T
 {
 private:
@@ -55,6 +48,11 @@ public:
     ~PMS5003T();
     PMS5003T_STATUS receive_data();
     PMS5003T_STATUS send_command(uint8_t cmd, uint8_t* data);
+    PMS5003T_STATUS request_data();
+    PMS5003T_STATUS passive_mode(bool enable);
+    PMS5003T_STATUS sleep(bool enable);
+    PMS5003T_STATUS update_data();
+
 
     // Getters
     uint16_t get_PM10_std();

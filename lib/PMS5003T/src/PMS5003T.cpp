@@ -1,6 +1,14 @@
 #include <Arduino.h>
 #include "PMS5003T.h"
 
+/**
+ * @brief A constructor for the creation of a object that handles
+ *  the serial communication with a PMS5003T sensor. This object 
+ * uses software serial to communicate so the pins only need to 
+ * be avaliable and digital.
+ * @param rx_pin A GPIO pin connected to the sensors TX pin.
+ * @param tx_pin A GPIO pin connected to the sensors RX pin.
+*/
 PMS5003T::PMS5003T(size_t rx_pin, size_t tx_pin) {
     this->Serial_p = new SoftwareSerial(rx_pin, tx_pin, false);
     this->Serial_p->setTimeout(5);
@@ -23,6 +31,11 @@ PMS5003T::~PMS5003T() {
     free(this->Serial_p);
 }
 
+/**
+ * @brief Sends a command to the sensor.
+ * @param cmd The command to be sent to the sensor, see sensor datasheet
+ *  for codes or PMS5003T_CMD in pms5003t.h.
+*/
 PMS5003T_STATUS PMS5003T::send_command(uint8_t cmd, uint8_t* data) {
     char packet[7] = {0x42, 0x4d, cmd, data[0], data[1], 0, 0};
 
@@ -51,6 +64,10 @@ PMS5003T_STATUS PMS5003T::send_command(uint8_t cmd, uint8_t* data) {
 }
 
 #if SERIAL_DEBUG
+/**
+ * @brief Only used when SERIAL_DEBUG is set to 1. Re defines the receive_data() 
+ * method as to be able to print debug messages, like the status output of the method.
+*/
 PMS5003T_STATUS PMS5003T::receive_data() {
     Serial.println("-------------------------------------------------------------");
     PMS5003T_STATUS status = this->receive_data_hook();
@@ -86,6 +103,10 @@ PMS5003T_STATUS PMS5003T::receive_data() {
 
 PMS5003T_STATUS PMS5003T::receive_data_hook() {
 #else
+/**
+ * @brief Waits for data from the sensor to be put on the bus and converts it
+ *  into usable values which are store in the caller object.
+*/
 PMS5003T_STATUS PMS5003T::receive_data() {
 #endif
 
@@ -123,6 +144,10 @@ PMS5003T_STATUS PMS5003T::receive_data() {
     return PMS5003T_STATUS::OK;
 }
 
+/**
+ * @brief Unpackes the `packet` and saves into itself.
+ * @param packet The packet received from the sensor unmodified.
+*/
 void PMS5003T::unpack_into_struct(char* packet) {
     this->PM10_std  = packet[4] << 8 | packet[5];
     this->PM25_std  = packet[6] << 8 | packet[7];
@@ -138,6 +163,67 @@ void PMS5003T::unpack_into_struct(char* packet) {
     this->part_100  = packet[26] << 8 | packet[27];
 }
 
+/**
+ * @brief Sends a request to the sensor to send back data. Only used
+ * when sensor is in passive mode.
+ * @returns Returns a error code acording to PMS5003T.h.
+*/
+PMS5003T_STATUS PMS5003T::request_data() {
+    uint8_t data[2] = {0x00, 0x00};
+    this->send_command((uint8_t) PMS5003T_CMD::READ_REQUEST_PASSIVE, data);
+    return PMS5003T_STATUS::OK;
+}
+
+/**
+ * @brief Sets the sensor to passive or active mode.
+ * @param enable if true sets the mode to passive, if false sets the mode to active.
+ * @returns Returns a error code acording to PMS5003T.h.
+*/
+PMS5003T_STATUS PMS5003T::passive_mode(bool enable) {
+    uint8_t data[2] = {0x00, enable ? 0x00 : 0x01};
+    this->send_command((uint8_t) PMS5003T_CMD::CHANGE_MODE, data);
+    return PMS5003T_STATUS::OK;
+}
+
+/**
+ * @brief Commands the sensor to go into sleep or wakes it up.
+ * @param enable if true sets the sensor to sleep, if false wakes the sensor up.
+ * @returns Returns a error code acording to PMS5003T.h.
+*/
+PMS5003T_STATUS PMS5003T::sleep(bool enable) {
+    uint8_t data[2] = {0x00, enable ? 0x00 : 0x01};
+    this->send_command((uint8_t) PMS5003T_CMD::SLEEP_SET, data);
+    return PMS5003T_STATUS::OK;
+}
+
+/**
+ * @brief Instead of having to call `request_data()` and then `receive_data()` this 
+ * method, sends a request for data, receives the data and saves it in the 
+ * object it was called from. Only use if sensor is in passive mode, otherwise use 
+ * `receive_data()`.
+ * @returns Returns a error code acording to PMS5003T.h.
+*/
+PMS5003T_STATUS PMS5003T::update_data() {
+    PMS5003T_STATUS status;
+    
+    status = this->request_data();
+    if (status != PMS5003T_STATUS::OK) {
+        return status;
+    }
+    
+    status = this->receive_data();
+    if (status != PMS5003T_STATUS::OK) {
+        return status;
+    }
+
+    return PMS5003T_STATUS::OK;
+}
+
+/**
+ * @brief Check that the start and check bytes are acording to PMS5003T's datasheet.
+ * @param packet The packet to check, including start and check bits.
+ * @param n The number of bytes in `packet`, defaults to 32.
+*/
 PMS5003T_STATUS PMS5003T::check_packet_validity(char* packet, size_t n /*= 32*/) {
     uint16_t check_bytes = packet[30] << 8 | packet[31];
 
