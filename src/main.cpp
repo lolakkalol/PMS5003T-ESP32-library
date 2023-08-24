@@ -1,18 +1,16 @@
 #include <Arduino.h>
+#include "PMS5003T.h"
 
-// put function declarations here:
-int myFunction(int, int);
+PMS5003T* pms5003t;
 
 void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+    Serial.begin(115200);
+    while (!Serial){}
+
+    pms5003t = new PMS5003T(13, 15);
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-}
-
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+    PMS5003T_STATUS status = pms5003t->receive_data();
+    sleep(2);
 }
