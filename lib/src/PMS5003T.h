@@ -3,13 +3,26 @@
 
 #include "SoftwareSerial.h"
 
-#define SERIAL_DEBUG (1) // Prints a bunch of debug info to usb serial
+#define SERIAL_DEBUG (1) // Prints a bunch of debug info to usb serial. Requires that Serial.begin(baud) is run before!
 
 enum class PMS5003T_STATUS {
     OK,
     GENERIC_ERROR,
     STARTBIT_ERROR,
     CHECKBIT_ERROR
+};
+
+enum class PMS5003T_CMD {
+    READ_REQUEST_PASSIVE = 0xe2,
+    CHANGE_MODE          = 0xe1,
+    SLEEP_SET            = 0xe4,
+};
+
+enum class CMD_ARG {
+    SLEEP   = 0x00,
+    WAKEUP  = 0x01,
+    PASSIVE = 0x00,
+    ACTIVE  = 0x01,
 };
 
 class PMS5003T
@@ -41,6 +54,7 @@ public:
     PMS5003T(size_t rx_pin, size_t tx_pin);
     ~PMS5003T();
     PMS5003T_STATUS receive_data();
+    PMS5003T_STATUS send_command(uint8_t cmd, uint8_t* data);
 
     // Getters
     uint16_t get_PM10_std();

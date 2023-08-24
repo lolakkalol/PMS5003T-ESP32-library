@@ -23,6 +23,33 @@ PMS5003T::~PMS5003T() {
     free(this->Serial_p);
 }
 
+PMS5003T_STATUS PMS5003T::send_command(uint8_t cmd, uint8_t* data) {
+    char packet[7] = {0x42, 0x4d, cmd, data[0], data[1], 0, 0};
+
+    uint16_t check_bytes = this->calculate_check(packet, 7);
+
+    packet[5] = (char) (check_bytes >> 8);
+    packet[6] = (char) (check_bytes & 0x00FF);
+
+    #if SERIAL_DEBUG
+    Serial.print("Packet to send: ");
+    for (int i = 0; i < 7; i++) {
+        Serial.print(String(packet[i], HEX));
+        Serial.print(" ");
+    }
+    Serial.println();
+    #endif
+
+    while(!this->Serial_p->availableForWrite()){
+        sleep(0.1);
+    }
+
+    this->Serial_p->write(packet, 7);
+    this->Serial_p->flush();
+
+    return PMS5003T_STATUS::OK;
+}
+
 #if SERIAL_DEBUG
 PMS5003T_STATUS PMS5003T::receive_data() {
     Serial.println("-------------------------------------------------------------");
@@ -70,7 +97,7 @@ PMS5003T_STATUS PMS5003T::receive_data() {
     }
     this->Serial_p->readBytes(packet, 32);
 
-    #ifdef SERIAL_DEBUG
+    #if SERIAL_DEBUG
     Serial.print("Message: ");
     for (size_t i = 0; i < 32; i++) {
         if (packet[i] < 0x10) {
