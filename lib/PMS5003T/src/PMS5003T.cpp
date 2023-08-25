@@ -202,7 +202,7 @@ PMS5003T_STATUS PMS5003T::passive_mode(bool enable) {
  * @param enable if true sets the sensor to sleep, if false wakes the sensor up.
  * @returns Returns a error code acording to PMS5003T.h.
 */
-PMS5003T_STATUS PMS5003T::sleep(bool enable) {
+PMS5003T_STATUS PMS5003T::sleep_enable(bool enable) {
     uint8_t data[2] = {0x00, enable ? 0x00 : 0x01};
     this->send_command((uint8_t) PMS5003T_CMD::SLEEP_SET, data);
     return PMS5003T_STATUS::OK;

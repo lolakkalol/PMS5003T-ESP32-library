@@ -50,7 +50,7 @@ public:
     PMS5003T_STATUS send_command(uint8_t cmd, uint8_t* data);
     PMS5003T_STATUS request_data();
     PMS5003T_STATUS passive_mode(bool enable);
-    PMS5003T_STATUS sleep(bool enable);
+    PMS5003T_STATUS sleep_enable(bool enable);
     PMS5003T_STATUS update_data();
 
 
